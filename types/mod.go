@@ -116,3 +116,12 @@ type InteresCondReq struct {
 	RoommateCnt uint8      `json:"roommate_cnt" binding:"omitempty"`
 	MoveInDate  CustomTime `json:"move_in_date" binding:"omitempty"`
 }
+
+type AveragePriceReq struct {
+	AddrZipCode string `json:"addr_zip_code" binding:"required,max=5"`
+	BedroomNum  int    `json:"bedroom_num"`
+	BathroomNum int    `json:"bathroom_num"`
+}
+type AveragePriceResp struct {
+	AverageRent float64 `json:"avg_rent"`
+}

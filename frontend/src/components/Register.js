@@ -6,9 +6,9 @@ import { isEmail } from "validator";
 import AuthService from "../services/auth.service";
 
 const genderOptions = [
-  { value: 0, label: "Male" },
+  { value: 2, label: "Male" },
   { value: 1, label: "Female" },
-  { value: 2, label: "Other" },
+  { value: 0, label: "Other" },
   { value: 3, label: "Prefer Not to Say" }
 ];
 

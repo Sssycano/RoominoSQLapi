@@ -12,6 +12,8 @@ import Interests from "./components/Interests";
 import Register from "./components/Register";
 import Profile from "./components/Profile";
 import SearchInterests from "./components/SearchInterests";
+import InterestsUserProfile from "./components/InterestUserProfile";
+import AvgPrice from "./components/Avgprice";
 import EventBus from "./common/EventBus";
 
 const App = () => {
@@ -93,6 +95,8 @@ const App = () => {
           <Route path="/profile/registerpet" element={<RegisterPet />} /> 
           <Route path="/profile/interests" element={<Interests />} /> 
           <Route path="/profile/searchinterests" element={<SearchInterests />} /> 
+          <Route path="/profile/interestprofile" element={<InterestsUserProfile />} /> 
+          <Route path="/profile/avgprice" element={<AvgPrice />} /> 
         </Routes>
       </div>
     </div>

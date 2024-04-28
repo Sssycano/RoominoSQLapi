@@ -38,6 +38,8 @@ func NewRouter() *gin.Engine {
 			authed.POST("profile/interests", api.CreateInterestsHandler())
 			authed.GET("profile/complexunitinfo", api.GetComplexUnitinfoHandler())
 			authed.POST("profile/searchinterests", api.SearchInterestswithcondHandler())
+			authed.GET("profile/interestprofile", api.InterestUserProfileHandler())
+			authed.POST("profile/avgprice", api.AveragePriceHandler())
 		}
 	}
 

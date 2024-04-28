@@ -68,7 +68,24 @@ func GetUserProfileHandler() gin.HandlerFunc {
 		userSrv := service.GetUserSrv()
 		resp, err := userSrv.GetUserProfile(ctx.Request.Context())
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			ctx.JSON(http.StatusInternalServerError, ErrorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusOK, resp)
+	}
+}
+
+func InterestUserProfileHandler() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var userResp types.UserResp
+		if err := ctx.ShouldBindQuery(&userResp); err != nil {
+			ctx.JSON(http.StatusInternalServerError, ErrorResponse(err))
+			return
+		}
+		userSrv := service.GetUserSrv()
+		resp, err := userSrv.InterestUserProfile(ctx.Request.Context(), userResp)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, ErrorResponse(err))
 			return
 		}
 		ctx.JSON(http.StatusOK, resp)

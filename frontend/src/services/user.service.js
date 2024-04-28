@@ -71,6 +71,23 @@ const searchInterests = (unit_rent_id, roommate_cnt,move_in_date) => {
     });
 };
 
+const getinterestsProfile = (user_name) => {
+  return axios.get(API_URL + "profile/interestprofile", {params: { user_name }, headers: authHeader(), })
+  .then(response => response.data)
+  .catch(error => {
+    throw error;
+  });
+};
+
+const avgPrice = (addr_zip_code, bedroom_num,bathroom_num) => {
+  return axios.post(API_URL+"profile/avgprice", { addr_zip_code, bedroom_num,bathroom_num }, { headers: authHeader() })
+    .then(response => {
+      return response.data;
+    })
+    .catch(error => {
+      throw error;
+    });
+};
 const UserService = {
   updatepet,
   getUserBoard,
@@ -81,6 +98,8 @@ const UserService = {
   createinterests,
   getcomplexunitinfo,
   searchInterests,
+  getinterestsProfile,
+  avgPrice,
 };
 
 export default UserService;

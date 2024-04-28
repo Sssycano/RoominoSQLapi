@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"roomino/ctl"
 	"roomino/dao"
@@ -9,8 +10,6 @@ import (
 	"roomino/types"
 	"roomino/util"
 	"sync"
-
-	"gorm.io/gorm"
 )
 
 type UserSrv struct {
@@ -26,11 +25,10 @@ func GetUserSrv() *UserSrv {
 	return UserSrvIns
 }
 
-func (s *UserSrv) Register(ctx context.Context, req *types.UserServiceReq) (resp interface{}, err error) {
+func (s *UserSrv) Register(ctx context.Context, req *types.UserServiceReq) (interface{}, error) {
 	userDao := dao.NewUserDao(ctx)
 	u, err := userDao.FindUserByUserName(req.Username)
-	switch err {
-	case gorm.ErrRecordNotFound:
+	if err == sql.ErrNoRows {
 		u = &model.Users{
 			Username:  req.Username,
 			FirstName: req.FirstName,
@@ -40,28 +38,25 @@ func (s *UserSrv) Register(ctx context.Context, req *types.UserServiceReq) (resp
 			Email:     req.Email,
 			Phone:     req.Phone,
 		}
-
-		if err = u.SetPassword(req.Passwd); err != nil {
-			return
+		if err := u.SetPassword(req.Passwd); err != nil {
+			return nil, err
 		}
 
-		if err = userDao.CreateUser(u); err != nil {
-			return
+		if err := userDao.CreateUser(u); err != nil {
+			return nil, err
 		}
-
 		return ctl.RespSuccess(), nil
-	case nil:
-		err = errors.New("Userexists")
-		return
-	default:
-		return
 	}
+	if err == nil {
+		return nil, errors.New("Userexists")
+	}
+	return nil, err
 }
 
 func (s *UserSrv) Login(ctx context.Context, req *types.UserServiceReq) (resp interface{}, err error) {
 	userDao := dao.NewUserDao(ctx)
 	user, err := userDao.FindUserByUserName(req.Username)
-	if err == gorm.ErrRecordNotFound {
+	if err == sql.ErrNoRows {
 		err = errors.New("UsernotExist")
 		return
 	}
@@ -91,7 +86,29 @@ func (s *UserSrv) GetUserProfile(ctx context.Context) (interface{}, error) {
 	userDao := dao.NewUserDao(ctx)
 	user, err := userDao.FindUserByUserName(u.UserName)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("user not found")
+		}
+		return nil, errors.New("failed to retrieve user info")
+	}
+	userProfile := types.UserProfile{
+		Username:  user.Username,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		DOB:       user.DOB,
+		Gender:    user.Gender,
+		Email:     user.Email,
+		Phone:     user.Phone,
+	}
+	return ctl.RespSuccessWithData(userProfile), nil
+}
+
+func (s *UserSrv) InterestUserProfile(ctx context.Context, req types.UserResp) (interface{}, error) {
+	username := req.UserName
+	userDao := dao.NewUserDao(ctx)
+	user, err := userDao.FindUserByUserName(username)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errors.New("user not found")
 		}
 		return nil, errors.New("failed to retrieve user info")

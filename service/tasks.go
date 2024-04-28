@@ -221,3 +221,18 @@ func (s *TaskSrv) SearchInterestswithcond(ctx context.Context, req *types.Intere
 	}
 	return ctl.RespSuccessWithData(interestsResp), nil
 }
+
+func (s *TaskSrv) GetAveragePrice(ctx context.Context, req *types.AveragePriceReq) (*types.AveragePriceResp, error) {
+	if req.AddrZipCode == "" {
+		return nil, errors.New("AddrZipCode is required")
+	}
+	taskDao := dao.NewTaskDao(ctx)
+	averageRent, err := taskDao.GetAverageRentByZipAndRoom(req.AddrZipCode, req.BedroomNum, req.BathroomNum)
+	if err != nil {
+		return nil, errors.New("NO unit meets requirements")
+	}
+	resp := &types.AveragePriceResp{
+		AverageRent: averageRent,
+	}
+	return resp, nil
+}

@@ -24,9 +24,6 @@ func (dao *UserDao) FindUserByUserName(userName string) (*model.Users, error) {
 	user := &model.Users{}
 	err := row.Scan(&user.Username, &user.FirstName, &user.LastName, &user.DOB, &user.Gender, &user.Email, &user.Phone, &user.Passwd)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
 		return nil, err
 	}
 

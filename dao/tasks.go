@@ -23,7 +23,7 @@ func NewTaskDao(ctx context.Context) *TaskDao {
 }
 
 func (dao *TaskDao) GetUnitsWithPetPolicy(companyName, buildingName, username string) ([]types.UnitInfoResp, error) {
-	queryUnits := "SELECT unit_rent_id, monthly_rent, square_footage, available_date_for_move_in FROM ApartmentUnit WHERE company_name = ? AND building_name = ?"
+	queryUnits := "SELECT UnitRentID, MonthlyRent, squareFootage, AvailableDateForMoveIn FROM ApartmentUnit WHERE CompanyName = ? AND BuildingName = ?"
 	unitRows, err := dao.DB.Query(queryUnits, companyName, buildingName)
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func (dao *TaskDao) GetUnitsWithPetPolicy(companyName, buildingName, username st
 		}
 		units = append(units, unit)
 	}
-	queryPets := "SELECT pet_name, pet_type, pet_size FROM pets WHERE username = ?"
+	queryPets := "SELECT PetName, PetType, PetSize FROM pets WHERE username = ?"
 	petRows, err := dao.DB.Query(queryPets, username)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (dao *TaskDao) GetUnitsWithPetPolicy(companyName, buildingName, username st
 		}
 		userPets = append(userPets, pet)
 	}
-	queryPetPolicy := "SELECT pet_type, pet_size, is_allowed FROM PetPolicy WHERE company_name = ? AND building_name = ?"
+	queryPetPolicy := "SELECT PetType, PetSize, isAllowed FROM PetPolicy WHERE CompanyName = ? AND BuildingName = ?"
 	petPolicyRows, err := dao.DB.Query(queryPetPolicy, companyName, buildingName)
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (dao *TaskDao) GetUnitsWithPetPolicy(companyName, buildingName, username st
 }
 
 func (dao *TaskDao) UpdatePet(req *types.UpdatePets, username string) error {
-	query := "SELECT pet_name, pet_type, pet_size FROM pets WHERE pet_name = ? AND pet_type = ? AND username = ?"
+	query := "SELECT PetName, PetType, PetSize FROM pets WHERE PetName = ? AND PetType = ? AND username = ?"
 	row := dao.DB.QueryRow(query, req.CurrentPetName, req.CurrentPetType, username)
 
 	var pet model.Pets
@@ -105,7 +105,7 @@ func (dao *TaskDao) UpdatePet(req *types.UpdatePets, username string) error {
 		}
 		return err
 	}
-	updateQuery := "UPDATE pets SET pet_name = ?, pet_type = ?, pet_size = ? WHERE pet_name = ? AND pet_type = ? AND username = ?"
+	updateQuery := "UPDATE pets SET PetName = ?, PetType = ?, PetSize = ? WHERE PetName = ? AND PetType = ? AND username = ?"
 	_, err := dao.DB.Exec(
 		updateQuery,
 		req.NewPetName, req.NewPetType, req.NewPetSize,
@@ -122,7 +122,7 @@ func (dao *TaskDao) UpdatePet(req *types.UpdatePets, username string) error {
 }
 
 func (dao *TaskDao) GetPet(username string) ([]model.Pets, error) {
-	query := "SELECT pet_name, pet_type, pet_size FROM pets WHERE username = ?"
+	query := "SELECT PetName, PetType, PetSize FROM pets WHERE username = ?"
 	rows, err := dao.DB.Query(query, username)
 	if err != nil {
 		return nil, err
@@ -143,7 +143,7 @@ func (dao *TaskDao) GetPet(username string) ([]model.Pets, error) {
 }
 
 func (dao *TaskDao) CreatePet(req *types.GetPets, username string) error {
-	query := "INSERT INTO pets (pet_name, pet_type, pet_size, username) VALUES (?, ?, ?, ?)"
+	query := "INSERT INTO pets (PetName, PetType, PetSize, username) VALUES (?, ?, ?, ?)"
 	_, err := dao.DB.Exec(query, req.CurrentPetName, req.CurrentPetType, req.CurrentPetSize, username)
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "unique constraint") {
@@ -155,7 +155,7 @@ func (dao *TaskDao) CreatePet(req *types.GetPets, username string) error {
 }
 
 func (dao *TaskDao) GetInterests(unitRentID int) ([]model.Interests, error) {
-	query := "SELECT username, unit_rent_id, roommate_cnt, move_in_date FROM interests WHERE unit_rent_id = ?"
+	query := "SELECT username, UnitRentID, RoommateCnt, MoveInDate FROM interests WHERE UnitRentID= ?"
 	rows, err := dao.DB.Query(query, unitRentID)
 	if err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func (dao *TaskDao) GetInterests(unitRentID int) ([]model.Interests, error) {
 
 func (dao *TaskDao) CreateInterests(req *types.PostInterestReq, username string) error {
 	query := `
-		INSERT INTO interests (username, unit_rent_id, roommate_cnt, move_in_date)
+		INSERT INTO interests (username, UnitRentID, RoommateCnt, MoveInDate)
 		VALUES (?, ?, ?, ?)
 	`
 	_, err := dao.DB.Exec(
@@ -197,7 +197,7 @@ func (dao *TaskDao) CreateInterests(req *types.PostInterestReq, username string)
 }
 
 func (dao *TaskDao) GetApartmentUnitByUnitRentID(unitRentID int) (*model.ApartmentUnit, error) {
-	query := "SELECT unit_rent_id, company_name, building_name, unit_number, monthly_rent, square_footage, available_date_for_move_in FROM ApartmentUnit WHERE unit_rent_id = ?"
+	query := "SELECT UnitRentID, CompanyName, BuildingName, unitNumber, MonthlyRent, squareFootage, AvailableDateForMoveIn FROM ApartmentUnit WHERE UnitRentID= ?"
 	row := dao.DB.QueryRow(query, unitRentID)
 	var unit model.ApartmentUnit
 	if err := row.Scan(&unit.UnitRentID, &unit.CompanyName, &unit.BuildingName, &unit.UnitNumber, &unit.MonthlyRent, &unit.SquareFootage, &unit.AvailableDateForMoveIn); err != nil {
@@ -210,7 +210,7 @@ func (dao *TaskDao) GetApartmentUnitByUnitRentID(unitRentID int) (*model.Apartme
 }
 
 func (dao *TaskDao) GetApartmentBuildingByUnitRentID(unitRentID int) (*model.ApartmentBuilding, error) {
-	queryUnit := "SELECT company_name, building_name FROM ApartmentUnit WHERE unit_rent_id = ?"
+	queryUnit := "SELECT CompanyName, BuildingName FROM ApartmentUnit WHERE UnitRentID= ?"
 	row := dao.DB.QueryRow(queryUnit, unitRentID)
 
 	var unit model.ApartmentUnit
@@ -220,7 +220,7 @@ func (dao *TaskDao) GetApartmentBuildingByUnitRentID(unitRentID int) (*model.Apa
 		}
 		return nil, err
 	}
-	queryBuilding := "SELECT company_name, building_name, addr_num, addr_street, addr_city, addr_state, addr_zip_code, year_built FROM ApartmentBuilding WHERE company_name = ? AND building_name = ?"
+	queryBuilding := "SELECT CompanyName, BuildingName, AddrNum, AddrStreet, AddrCity, AddrState, AddrZipCode, YearBuilt FROM ApartmentBuilding WHERE CompanyName = ? AND BuildingName = ?"
 	rowBuilding := dao.DB.QueryRow(queryBuilding, unit.CompanyName, unit.BuildingName)
 	var building model.ApartmentBuilding
 	if err := rowBuilding.Scan(&building.CompanyName, &building.BuildingName, &building.AddrNum, &building.AddrStreet, &building.AddrCity, &building.AddrState, &building.AddrZipCode, &building.YearBuilt); err != nil {
@@ -232,7 +232,7 @@ func (dao *TaskDao) GetApartmentBuildingByUnitRentID(unitRentID int) (*model.Apa
 	return &building, nil
 }
 func (dao *TaskDao) GetProvidesByUnitRentID(unitRentID int) ([]model.Provides, error) {
-	queryUnit := "SELECT company_name, building_name FROM ApartmentUnit WHERE unit_rent_id = ?"
+	queryUnit := "SELECT CompanyName, BuildingName FROM ApartmentUnit WHERE UnitRentID= ?"
 	rowUnit := dao.DB.QueryRow(queryUnit, unitRentID)
 	var unit model.ApartmentUnit
 	if err := rowUnit.Scan(&unit.CompanyName, &unit.BuildingName); err != nil {
@@ -241,7 +241,7 @@ func (dao *TaskDao) GetProvidesByUnitRentID(unitRentID int) ([]model.Provides, e
 		}
 		return nil, err
 	}
-	queryProvides := "SELECT a_type, company_name, building_name, fee, waiting_list FROM provides WHERE company_name = ? AND building_name = ?"
+	queryProvides := "SELECT aType, CompanyName, BuildingName, fee, waitingList FROM provides WHERE CompanyName = ? AND BuildingName = ?"
 	rows, err := dao.DB.Query(queryProvides, unit.CompanyName, unit.BuildingName)
 	if err != nil {
 		return nil, err
@@ -261,7 +261,7 @@ func (dao *TaskDao) GetProvidesByUnitRentID(unitRentID int) ([]model.Provides, e
 	return provides, nil
 }
 func (dao *TaskDao) GetAmenitiesInByUnitRentID(unitRentID int) ([]model.AmenitiesIn, error) {
-	query := "SELECT a_type, unit_rent_id FROM AmenitiesIn WHERE unit_rent_id = ?"
+	query := "SELECT aType, UnitRentID FROM AmenitiesIn WHERE UnitRentID= ?"
 	rows, err := dao.DB.Query(query, unitRentID)
 	if err != nil {
 		return nil, err
@@ -282,7 +282,7 @@ func (dao *TaskDao) GetAmenitiesInByUnitRentID(unitRentID int) ([]model.Amenitie
 }
 
 func (dao *TaskDao) CountAvailableUnitsByUnitRentID(unitRentID int) (int, error) {
-	queryUnit := "SELECT company_name, building_name FROM ApartmentUnit WHERE unit_rent_id = ?"
+	queryUnit := "SELECT CompanyName, BuildingName FROM ApartmentUnit WHERE UnitRentID= ?"
 	rowUnit := dao.DB.QueryRow(queryUnit, unitRentID)
 	var unit model.ApartmentUnit
 	if err := rowUnit.Scan(&unit.CompanyName, &unit.BuildingName); err != nil {
@@ -293,8 +293,8 @@ func (dao *TaskDao) CountAvailableUnitsByUnitRentID(unitRentID int) (int, error)
 	}
 	queryCount := `
 		SELECT COUNT(*) FROM ApartmentUnit
-		WHERE company_name = ? AND building_name = ?
-		AND available_date_for_move_in IS NOT NULL
+		WHERE CompanyName = ? AND BuildingName = ?
+		AND AvailableDateForMoveIn IS NOT NULL
 	`
 	rowCount := dao.DB.QueryRow(queryCount, unit.CompanyName, unit.BuildingName)
 	var count int
@@ -305,7 +305,7 @@ func (dao *TaskDao) CountAvailableUnitsByUnitRentID(unitRentID int) (int, error)
 }
 
 func (dao *TaskDao) GetRoomCountsByUnitRentID(unitRentID int) (int, int, int, error) {
-	query := "SELECT name FROM rooms WHERE unit_rent_id = ?"
+	query := "SELECT name FROM rooms WHERE UnitRentID= ?"
 	rows, err := dao.DB.Query(query, unitRentID)
 	if err != nil {
 		return 0, 0, 0, err
@@ -345,14 +345,14 @@ func (dao *TaskDao) SearchInterestswithcond(unitRentID int, moveInDate *types.Cu
 		}
 		moveInDateValue = &parsedTime
 	}
-	query := "SELECT username, unit_rent_id, roommate_cnt, move_in_date FROM interests WHERE unit_rent_id = ?"
+	query := "SELECT username, UnitRentID, RoommateCnt, MoveInDate FROM interests WHERE UnitRentID= ?"
 	args := []interface{}{unitRentID}
 	if moveInDateValue != nil {
-		query += " AND move_in_date = ?"
+		query += " AND MoveInDate = ?"
 		args = append(args, *moveInDateValue)
 	}
 	if roommateCnt != nil {
-		query += " AND roommate_cnt = ?"
+		query += " AND RoommateCnt = ?"
 		args = append(args, *roommateCnt)
 	}
 	rows, err := dao.DB.Query(query, args...)
@@ -374,4 +374,36 @@ func (dao *TaskDao) SearchInterestswithcond(unitRentID int, moveInDate *types.Cu
 	}
 
 	return interests, nil
+}
+
+func (dao *TaskDao) GetAverageRentByZipAndRoom(addrZipCode string, bedroomNum int, bathroomNum int) (float64, error) {
+	query := `
+		SELECT AVG(au.MonthlyRent)
+		FROM ApartmentUnit au
+		JOIN ApartmentBuilding ab ON au.CompanyName = ab.CompanyName AND au.BuildingName = ab.BuildingName
+		JOIN Rooms r ON r.UnitRentID = au.UnitRentID
+		WHERE ab.AddrZipCode = ?
+		AND (
+			SELECT COUNT(*)
+			FROM Rooms
+			WHERE UnitRentID = au.UnitRentID AND name REGEXP ?
+		) = ?
+		AND (
+			SELECT COUNT(*)
+			FROM Rooms
+			WHERE UnitRentID = au.UnitRentID AND name REGEXP ?
+		) = ?
+	`
+	bedroomPattern := "bedroom.*"
+	bathroomPattern := "bathroom.*"
+	row := dao.DB.QueryRow(query, addrZipCode, bedroomPattern, bedroomNum, bathroomPattern, bathroomNum)
+
+	var averageRent float64
+	if err := row.Scan(&averageRent); err != nil {
+		if err != sql.ErrNoRows {
+			return 0, err
+		}
+		return 0, nil
+	}
+	return averageRent, nil
 }

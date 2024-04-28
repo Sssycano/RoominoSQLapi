@@ -3,7 +3,7 @@ import Form from 'react-validation/build/form';
 import Input from 'react-validation/build/input';
 import Button from 'react-validation/build/button';
 import UserService from '../services/user.service';
-
+import { Link } from 'react-router-dom'; 
 const SearchInterests = () => {
   const [formData, setFormData] = useState({
     unit_rent_id: '',
@@ -105,7 +105,9 @@ const SearchInterests = () => {
                 <ul>
                   {searchResult.map((result) => (
                     <li key={result.username}>
-                      <strong>Username:</strong> {result.username}<br />
+                      <Link to={`/profile/interestprofile?username=${result.username}`}> 
+                        {result.username}
+                      </Link>
                       <strong>Unit Rent ID:</strong> {result.unit_rent_id}<br />
                       <strong>Roommate Count:</strong> {result.roommate_cnt}<br />
                       <strong>Move-in Date:</strong> {new Date(result.move_in_date).toLocaleDateString('en-US', {
