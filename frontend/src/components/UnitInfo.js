@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Form from 'react-validation/build/form';
 import Input from 'react-validation/build/input';
 import Button from 'react-validation/build/button';
-import { Link } from 'react-router-dom'; 
+import { Link } from 'react-router-dom';
 import UserService from '../services/user.service';
 
 const UnitInfo = () => {
@@ -10,7 +10,8 @@ const UnitInfo = () => {
     companyName: '',
     buildingName: ''
   });
-  const [unitInfo, setUnitInfo] = useState([]);
+  const [units, setUnits] = useState([]);
+  const [petPolicies, setPetPolicies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -25,8 +26,10 @@ const UnitInfo = () => {
     setLoading(true);
 
     UserService.searchUnits(formData.companyName, formData.buildingName)
-      .then(data => {
-        setUnitInfo(data.data);
+      .then(response => {
+        const { units, petPolicies } = response.data; 
+        setUnits(units);
+        setPetPolicies(petPolicies);
         setLoading(false);
       })
       .catch(error => {
@@ -67,30 +70,53 @@ const UnitInfo = () => {
           </Form>
           {message && <div className="alert alert-danger">{message}</div>}
           <hr />
-          <div>
-            {unitInfo.length > 0 && (
-              <div>
-                <h3>Unit Information</h3>
-                <ul>
-                  {unitInfo.map(unit => (
-                    <li key={unit.unit_rent_id}>
-                      <strong>Unit Rent ID:</strong> 
-                      <Link to={`/profile/interests?unit_rent_id=${unit.unit_rent_id}`}>{unit.unit_rent_id}</Link> 
-                      <br />
-                      <strong>Monthly Rent:</strong> {unit.monthly_rent}<br />
-                      <strong>Square Footage:</strong> {unit.square_footage}<br />
-                      <strong>Available Date for Move-in:</strong> {new Date(unit.available_date_for_move_in).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: '2-digit',
-                          day: '2-digit'
-                        })}<br />
-                      <strong>Your pet allowed? :</strong> {unit.is_pet_allowed ? 'Yes' : 'No'}
-                      <hr />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+          
+          <div className="row"> 
+            <div className="col-md-6"> 
+              {units.length > 0 && (
+                <div>
+                  <h3>Unit Information</h3>
+                  <ul>
+                    {units.map(unit => (
+                      <li key={unit.unit_rent_id}>
+                        <strong>Unit Rent ID:</strong> 
+                        <Link to={`/profile/interests?unit_rent_id=${unit.unit_rent_id}`}>{unit.unit_rent_id}</Link> 
+                        <br />
+                        <strong>Monthly Rent:</strong> {unit.monthly_rent}<br />
+                        <strong>Square Footage:</strong> {unit.square_footage}<br />
+                        <strong>Available Date for Move-in:</strong> {new Date(unit.available_date_for_move_in).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit'
+                          })}<br />
+                        <strong>Your pet allowed? :</strong> {unit.is_pet_allowed ? 'Yes' : 'No'}
+                        <hr />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <div className="col-md-6"> 
+              {petPolicies.length > 0 && (
+                <div>
+                  <h3>Pet Policy For Your Pets</h3>
+                  <ul>
+                    {petPolicies.map(petPolicy => (
+                      <li key={petPolicy.pet_type + petPolicy.pet_size}>
+                        <strong>Pet Type:</strong> {petPolicy.pet_type}<br />
+                        <strong>Pet Size:</strong> {petPolicy.pet_size}<br />
+                        <strong>Is Allowed:</strong> {petPolicy.is_allowed ? 'Yes' : 'No'}<br />
+                        <strong>Registration Fee:</strong> {petPolicy.registration_fee}<br />
+                        <strong>Monthly Fee:</strong> {petPolicy.monthly_fee}<br />
+                        <hr />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

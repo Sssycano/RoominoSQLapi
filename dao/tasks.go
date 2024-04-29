@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"regexp"
 	"roomino/model"
 	"roomino/types"
 	"strings"
@@ -23,75 +22,86 @@ func NewTaskDao(ctx context.Context) *TaskDao {
 }
 
 func (dao *TaskDao) GetUnitsWithPetPolicy(companyName, buildingName, username string) ([]types.UnitInfoResp, error) {
-	queryUnits := "SELECT UnitRentID, MonthlyRent, squareFootage, AvailableDateForMoveIn FROM ApartmentUnit WHERE CompanyName = ? AND BuildingName = ?"
-	unitRows, err := dao.DB.Query(queryUnits, companyName, buildingName)
-	if err != nil {
-		return nil, err
-	}
-	defer unitRows.Close()
-	var units []model.ApartmentUnit
-	for unitRows.Next() {
-		var unit model.ApartmentUnit
-		if err := unitRows.Scan(&unit.UnitRentID, &unit.MonthlyRent, &unit.SquareFootage, &unit.AvailableDateForMoveIn); err != nil {
-			return nil, err
-		}
-		units = append(units, unit)
-	}
-	queryPets := "SELECT PetName, PetType, PetSize FROM pets WHERE username = ?"
-	petRows, err := dao.DB.Query(queryPets, username)
-	if err != nil {
-		return nil, err
-	}
-	defer petRows.Close()
 
-	var userPets []model.Pets
-	for petRows.Next() {
-		var pet model.Pets
-		if err := petRows.Scan(&pet.PetName, &pet.PetType, &pet.PetSize); err != nil {
-			return nil, err
-		}
-		userPets = append(userPets, pet)
-	}
-	queryPetPolicy := "SELECT PetType, PetSize, isAllowed FROM PetPolicy WHERE CompanyName = ? AND BuildingName = ?"
-	petPolicyRows, err := dao.DB.Query(queryPetPolicy, companyName, buildingName)
+	query := `SELECT au.UnitRentID, au.MonthlyRent, au.squareFootage, au.AvailableDateForMoveIn,
+					CASE 
+						WHEN COUNT(IF(pp.IsAllowed = 0, 1, NULL)) > 0 THEN 0 
+						ELSE 1 
+					END AS IsPetAllowed
+				FROM ApartmentUnit au
+				JOIN Pets p ON p.username = ?
+				LEFT JOIN PetPolicy pp ON pp.CompanyName = au.CompanyName AND pp.BuildingName = au.BuildingName 
+						AND pp.PetType = p.PetType AND pp.PetSize = p.PetSize
+				WHERE 
+					au.CompanyName = ? AND au.BuildingName = ? 
+				GROUP BY 
+					au.UnitRentID
+			`
+
+	rows, err := dao.DB.Query(query, username, companyName, buildingName)
 	if err != nil {
 		return nil, err
 	}
-	defer petPolicyRows.Close()
-
-	var petPolicies []model.PetPolicy
-	for petPolicyRows.Next() {
-		var policy model.PetPolicy
-		if err := petPolicyRows.Scan(&policy.PetType, &policy.PetSize, &policy.IsAllowed); err != nil {
-			return nil, err
-		}
-		petPolicies = append(petPolicies, policy)
-	}
-	petPolicyMap := make(map[string]bool)
-	for _, policy := range petPolicies {
-		key := policy.PetType + "-" + policy.PetSize
-		petPolicyMap[key] = policy.IsAllowed
-	}
+	defer rows.Close()
 	var unitInfos []types.UnitInfoResp
-	for _, unit := range units {
-		isPetAllowed := true
-		for _, pet := range userPets {
-			key := pet.PetType + "-" + pet.PetSize
-			if allowed, ok := petPolicyMap[key]; !ok || !allowed {
-				isPetAllowed = false
-				break
-			}
-		}
-		unitInfo := types.UnitInfoResp{
-			UnitRentID:             unit.UnitRentID,
-			MonthlyRent:            unit.MonthlyRent,
-			SquareFootage:          unit.SquareFootage,
-			AvailableDateForMoveIn: unit.AvailableDateForMoveIn,
-			IsPetAllowed:           isPetAllowed,
+	for rows.Next() {
+		var unitInfo types.UnitInfoResp
+		if err := rows.Scan(
+			&unitInfo.UnitRentID,
+			&unitInfo.MonthlyRent,
+			&unitInfo.SquareFootage,
+			&unitInfo.AvailableDateForMoveIn,
+			&unitInfo.IsPetAllowed,
+		); err != nil {
+			return nil, err
 		}
 		unitInfos = append(unitInfos, unitInfo)
 	}
 	return unitInfos, nil
+}
+
+func (dao *TaskDao) GetPetPolicies(companyName, buildingName, username string) ([]types.PetPolicy, error) {
+	query := `
+		SELECT 
+			pp.PetType, 
+			pp.PetSize, 
+			pp.IsAllowed,
+			pp.RegistrationFee,
+			pp.MonthlyFee
+		FROM 
+			PetPolicy pp
+		JOIN 
+			Pets p ON p.PetType = pp.PetType 
+				AND p.PetSize = pp.PetSize 
+				AND p.username = ?
+		WHERE 
+			pp.CompanyName = ? 
+			AND pp.BuildingName = ? 
+	`
+
+	rows, err := dao.DB.Query(query, username, companyName, buildingName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var petPolicies []types.PetPolicy
+	for rows.Next() {
+		var petPolicy types.PetPolicy
+		if err := rows.Scan(
+			&petPolicy.PetType,
+			&petPolicy.PetSize,
+			&petPolicy.IsAllowed,
+			&petPolicy.RegistrationFee,
+			&petPolicy.MonthlyFee,
+		); err != nil {
+			return nil, err
+		}
+
+		petPolicies = append(petPolicies, petPolicy)
+	}
+
+	return petPolicies, nil
 }
 
 func (dao *TaskDao) UpdatePet(req *types.UpdatePets, username string) error {
@@ -101,7 +111,7 @@ func (dao *TaskDao) UpdatePet(req *types.UpdatePets, username string) error {
 	var pet model.Pets
 	if err := row.Scan(&pet.PetName, &pet.PetType, &pet.PetSize); err != nil {
 		if err == sql.ErrNoRows {
-			return errors.New("Pet not found")
+			return errors.New("PET not found")
 		}
 		return err
 	}
@@ -176,10 +186,7 @@ func (dao *TaskDao) GetInterests(unitRentID int) ([]model.Interests, error) {
 }
 
 func (dao *TaskDao) CreateInterests(req *types.PostInterestReq, username string) error {
-	query := `
-		INSERT INTO interests (username, UnitRentID, RoommateCnt, MoveInDate)
-		VALUES (?, ?, ?, ?)
-	`
+	query := "INSERT INTO interests (username, UnitRentID, RoommateCnt, MoveInDate) VALUES (?, ?, ?, ?)"
 	_, err := dao.DB.Exec(
 		query,
 		username,
@@ -189,7 +196,7 @@ func (dao *TaskDao) CreateInterests(req *types.PostInterestReq, username string)
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "unique constraint") {
-			return errors.New("DUPLICATE_KEY")
+			return errors.New("DUPLICATE_KEY: Interests already exists")
 		}
 		return err
 	}
@@ -282,52 +289,40 @@ func (dao *TaskDao) GetAmenitiesInByUnitRentID(unitRentID int) ([]model.Amenitie
 }
 
 func (dao *TaskDao) CountAvailableUnitsByUnitRentID(unitRentID int) (int, error) {
-	queryUnit := "SELECT CompanyName, BuildingName FROM ApartmentUnit WHERE UnitRentID= ?"
-	rowUnit := dao.DB.QueryRow(queryUnit, unitRentID)
-	var unit model.ApartmentUnit
-	if err := rowUnit.Scan(&unit.CompanyName, &unit.BuildingName); err != nil {
-		if err == sql.ErrNoRows {
-			return 0, nil
-		}
-		return 0, err
-	}
-	queryCount := `
-		SELECT COUNT(*) FROM ApartmentUnit
-		WHERE CompanyName = ? AND BuildingName = ?
-		AND AvailableDateForMoveIn IS NOT NULL
-	`
-	rowCount := dao.DB.QueryRow(queryCount, unit.CompanyName, unit.BuildingName)
+	query := `SELECT COUNT(*) 
+  				FROM ApartmentUnit au
+			WHERE au.CompanyName = (SELECT CompanyName FROM ApartmentUnit WHERE UnitRentID = ?)
+				AND au.BuildingName = (SELECT BuildingName FROM ApartmentUnit WHERE UnitRentID = ?)
+				AND au.AvailableDateForMoveIn IS NOT NULL
+			`
+
+	row := dao.DB.QueryRow(query, unitRentID, unitRentID)
+
 	var count int
-	if err := rowCount.Scan(&count); err != nil {
+	if err := row.Scan(&count); err != nil {
 		return 0, err
 	}
+
 	return count, nil
 }
 
 func (dao *TaskDao) GetRoomCountsByUnitRentID(unitRentID int) (int, int, int, error) {
-	query := "SELECT name FROM rooms WHERE UnitRentID= ?"
-	rows, err := dao.DB.Query(query, unitRentID)
-	if err != nil {
+	query := `
+		SELECT 
+			COUNT(CASE WHEN name REGEXP 'bedroom' THEN 1 ELSE NULL END) AS BedroomCount,
+			COUNT(CASE WHEN name REGEXP 'bathroom' THEN 1 ELSE NULL END) AS BathroomCount,
+			COUNT(CASE WHEN name REGEXP 'livingroom' THEN 1 ELSE NULL END) AS LivingRoomCount
+		FROM Rooms r
+		WHERE UnitRentID = ?
+	`
+
+	row := dao.DB.QueryRow(query, unitRentID)
+
+	var bedroomCount, bathroomCount, livingRoomCount int
+	if err := row.Scan(&bedroomCount, &bathroomCount, &livingRoomCount); err != nil {
 		return 0, 0, 0, err
 	}
-	defer rows.Close()
-	var bedroomCount, bathroomCount, livingRoomCount int
-	bedroomRegex := regexp.MustCompile(`(?i)bedroom\d*`)
-	bathroomRegex := regexp.MustCompile(`(?i)bathroom\d*`)
-	livingRoomRegex := regexp.MustCompile(`(?i)livingroom\d*`)
-	for rows.Next() {
-		var roomName string
-		if err := rows.Scan(&roomName); err != nil {
-			return 0, 0, 0, err
-		}
-		if bedroomRegex.MatchString(roomName) {
-			bedroomCount++
-		} else if bathroomRegex.MatchString(roomName) {
-			bathroomCount++
-		} else if livingRoomRegex.MatchString(roomName) {
-			livingRoomCount++
-		}
-	}
+
 	return bedroomCount, bathroomCount, livingRoomCount, nil
 }
 

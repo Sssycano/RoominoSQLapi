@@ -5,10 +5,10 @@ import UserService from '../services/user.service';
 import "./Profile.css"; 
 
 const genderOptions = [
-  { value: 2, label: "Male" },
-  { value: 1, label: "Female" },
-  { value: 0, label: "Other" },
-  { value: 3, label: "Prefer Not to Say" }
+  { value: 0, label: "Not known" },
+  { value: 1, label: "Male" },
+  { value: 2, label: "Female" },
+  { value: 9, label: "Not applicable" }
 ];
 
 const Profile = () => {

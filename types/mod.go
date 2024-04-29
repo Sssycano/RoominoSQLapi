@@ -35,7 +35,13 @@ type UnitInfoResp struct {
 	AvailableDateForMoveIn string `json:"available_date_for_move_in" form:"available_date_for_move_in" binding:"required"`
 	IsPetAllowed           bool   `json:"is_pet_allowed" form:"is_pet_allowed"`
 }
-
+type PetPolicy struct {
+	PetType         string `json:"pet_type" form:"pet_type"`
+	PetSize         string `json:"pet_size" form:"pet_size"`
+	IsAllowed       bool   `json:"is_allowed" form:"is_allowed"`
+	RegistrationFee int    `json:"registration_fee" form:"registration_fee"`
+	MonthlyFee      int    `json:"monthly_fee" form:"monthly_fee"`
+}
 type UpdatePets struct {
 	CurrentPetName string `json:"current_pet_name" binding:"required,max=50"`
 	CurrentPetType string `json:"current_pet_type" binding:"required,max=20"`

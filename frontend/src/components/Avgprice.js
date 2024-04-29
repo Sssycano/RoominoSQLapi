@@ -78,7 +78,7 @@ const AvgPrice = () => {
         </div>
       </Form>
       {message && <div className="alert alert-danger">{message}</div>} 
-      {avgRent && <p>Average Rent: ${avgRent}</p>}
+      {avgRent && <p>Average Rent: {avgRent}</p>}
     </div>
   );
 };

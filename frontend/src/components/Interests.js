@@ -73,6 +73,7 @@ const Interests = () => {
           <p><strong>Building Name:</strong> {complexUnitInfo.building_name}</p>
           <p><strong>Address:</strong> {complexUnitInfo.address}</p>
           <p><strong>Year Built:</strong> {complexUnitInfo.year_built}</p>
+          <p><strong>Available Units:</strong> {complexUnitInfo.available_units}</p>
           <p><strong>Building Amenities:</strong></p>
           <ul>
             {complexUnitInfo.amenities_building.map((amenity, index) => (
@@ -81,6 +82,7 @@ const Interests = () => {
           </ul>
 
           <h2>Unit Information</h2>
+          <p><strong>Unit Rent ID:</strong> {complexUnitInfo.unit_rent_id}</p> 
           <p><strong>Monthly Rent:</strong> {complexUnitInfo.monthly_rent}</p>
           <p><strong>Square Footage:</strong> {complexUnitInfo.square_footage}</p>
           <p><strong>Available Date for Move-In:</strong> {new Date(complexUnitInfo.available_date_for_move_in).toLocaleDateString()}</p>

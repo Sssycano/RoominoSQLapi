@@ -24,28 +24,25 @@ func GetTaskSrv() *TaskSrv {
 	return TaskSrvIns
 }
 
-func (s *TaskSrv) GetAvailableUnitsWithPetPolicy(ctx context.Context, req *types.UnitInforeq) (resp interface{}, err error) {
+func (s *TaskSrv) GetAvailableUnitsWithPetPolicy(ctx context.Context, req *types.UnitInforeq) (interface{}, error) {
 	taskDao := dao.NewTaskDao(ctx)
 	u, err := ctl.GetUserInfo(ctx)
 	if err != nil {
-		return
+		return nil, errors.New("failed to get user info")
 	}
 	units, err := taskDao.GetUnitsWithPetPolicy(req.CompanyName, req.BuildingName, u.UserName)
 	if err != nil {
 		return nil, errors.New("failed to retrieve units")
 	}
-	var unitResp []types.UnitInfoResp
-	for _, unit := range units {
-		unitResp = append(unitResp, types.UnitInfoResp{
-			UnitRentID:             unit.UnitRentID,
-			MonthlyRent:            unit.MonthlyRent,
-			SquareFootage:          unit.SquareFootage,
-			AvailableDateForMoveIn: unit.AvailableDateForMoveIn,
-			IsPetAllowed:           unit.IsPetAllowed,
-		})
+	petPolicies, err := taskDao.GetPetPolicies(req.CompanyName, req.BuildingName, u.UserName)
+	if err != nil {
+		return nil, errors.New("failed to retrieve pet policies")
 	}
-
-	return ctl.RespSuccessWithData(unitResp), nil
+	result := map[string]interface{}{
+		"units":       units,
+		"petPolicies": petPolicies,
+	}
+	return ctl.RespSuccessWithData(result), nil
 }
 
 func (s *TaskSrv) UpdatePetInfo(ctx context.Context, req *types.UpdatePets) (resp interface{}, err error) {
