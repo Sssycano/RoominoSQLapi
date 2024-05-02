@@ -64,9 +64,9 @@ type UnitRentIDReq struct {
 	UnitRentID int `json:"unit_rent_id" form:"unit_rent_id"`
 }
 type PostInterestReq struct {
-	UnitRentID  int       `json:"unit_rent_id"`
-	RoommateCnt uint8     `json:"roommate_cnt"`
-	MoveInDate  time.Time `json:"move_in_date"`
+	UnitRentID  int        `json:"unit_rent_id"`
+	RoommateCnt uint8      `json:"roommate_cnt"`
+	MoveInDate  CustomTime `json:"move_in_date"`
 }
 
 type ComplexUnitinfo struct {

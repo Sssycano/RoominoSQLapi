@@ -187,11 +187,20 @@ func (dao *TaskDao) GetInterests(unitRentID int) ([]model.Interests, error) {
 
 func (dao *TaskDao) CreateInterests(req *types.PostInterestReq, username string) error {
 	query := "INSERT INTO interests (username, UnitRentID, RoommateCnt, MoveInDate) VALUES (?, ?, ?, ?)"
+	dbLocation, _ := time.LoadLocation("America/New_York")
+
+	var moveInDateValue *time.Time
+
+	dateStr := req.MoveInDate.Time.Format("2006-01-02")
+	parsedTime, _ := time.ParseInLocation("2006-01-02", dateStr, dbLocation)
+
+	moveInDateValue = &parsedTime
+
 	_, err := dao.DB.Exec(
 		query,
 		username,
 		req.UnitRentID,
-		req.RoommateCnt,
+		moveInDateValue,
 		req.MoveInDate,
 	)
 	if err != nil {
