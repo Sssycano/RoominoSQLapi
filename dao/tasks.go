@@ -190,8 +190,8 @@ func (dao *TaskDao) CreateInterests(req *types.PostInterestReq, username string)
 	dbLocation, _ := time.LoadLocation("America/New_York")
 
 	var moveInDateValue *time.Time
-
-	dateStr := req.MoveInDate.Time.Format("2006-01-02")
+	MoveInDate := req.MoveInDate
+	dateStr := MoveInDate.Time.Format("2006-01-02")
 	parsedTime, _ := time.ParseInLocation("2006-01-02", dateStr, dbLocation)
 
 	moveInDateValue = &parsedTime
@@ -200,8 +200,8 @@ func (dao *TaskDao) CreateInterests(req *types.PostInterestReq, username string)
 		query,
 		username,
 		req.UnitRentID,
+		req.RoommateCnt,
 		moveInDateValue,
-		req.MoveInDate,
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "Duplicate entry") || strings.Contains(err.Error(), "unique constraint") {

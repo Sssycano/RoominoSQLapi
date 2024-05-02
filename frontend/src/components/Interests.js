@@ -42,8 +42,9 @@ const Interests = () => {
     try {
       const parsedRoommateCnt = parseInt(roommateCnt);
       const parsedMoveInDate = new Date(moveInDate);
-
-      await UserService.createinterests(unitRentId, parsedRoommateCnt, parsedMoveInDate);
+      const formattedMoveInDate = parsedMoveInDate.toISOString().substring(0, 10);  // 保证格式为 'YYYY-MM-DD'
+  
+      await UserService.createinterests(unitRentId, parsedRoommateCnt, formattedMoveInDate);
       setCreateMessage('Interest created successfully!');
       
       setTimeout(() => {

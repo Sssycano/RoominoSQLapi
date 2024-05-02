@@ -19,6 +19,9 @@ type TokenData struct {
 	User  interface{} `json:"user"`
 	Token string      `json:"token"`
 }
+type CustomTime struct {
+	time.Time
+}
 
 type UserResp struct {
 	UserName string `json:"user_name" form:"user_name" example:"FanOne"`
@@ -63,11 +66,6 @@ type InterestResp struct {
 type UnitRentIDReq struct {
 	UnitRentID int `json:"unit_rent_id" form:"unit_rent_id"`
 }
-type PostInterestReq struct {
-	UnitRentID  int        `json:"unit_rent_id"`
-	RoommateCnt uint8      `json:"roommate_cnt"`
-	MoveInDate  CustomTime `json:"move_in_date"`
-}
 
 type ComplexUnitinfo struct {
 	CompanyName       string   `json:"company_name" binding:"required"`
@@ -98,10 +96,6 @@ type UserProfile struct {
 	Phone     string `json:"phone"`
 }
 
-type CustomTime struct {
-	time.Time
-}
-
 func (t *CustomTime) UnmarshalJSON(data []byte) error {
 	str := string(data)
 	str = str[1 : len(str)-1]
@@ -130,4 +124,9 @@ type AveragePriceReq struct {
 }
 type AveragePriceResp struct {
 	AverageRent float64 `json:"avg_rent"`
+}
+type PostInterestReq struct {
+	UnitRentID  int        `json:"unit_rent_id"`
+	RoommateCnt uint8      `json:"roommate_cnt"`
+	MoveInDate  CustomTime `json:"move_in_date"`
 }
