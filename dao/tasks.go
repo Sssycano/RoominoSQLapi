@@ -29,7 +29,7 @@ func (dao *TaskDao) GetUnitsWithPetPolicy(companyName, buildingName, username st
 						ELSE 1 
 					END AS IsPetAllowed
 				FROM ApartmentUnit au
-				JOIN Pets p ON p.username = ?
+				LEFT JOIN Pets p ON p.username = ?
 				LEFT JOIN PetPolicy pp ON pp.CompanyName = au.CompanyName AND pp.BuildingName = au.BuildingName 
 						AND pp.PetType = p.PetType AND pp.PetSize = p.PetSize
 				WHERE 

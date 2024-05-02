@@ -26,16 +26,18 @@ const UnitInfo = () => {
     setLoading(true);
 
     UserService.searchUnits(formData.companyName, formData.buildingName)
-      .then(response => {
-        const { units, petPolicies } = response.data; 
-        setUnits(units);
-        setPetPolicies(petPolicies);
-        setLoading(false);
-      })
-      .catch(error => {
-        setMessage('Error retrieving unit info');
-        setLoading(false);
-      });
+    .then(response => {
+      const { units, petPolicies } = response.data;
+      setUnits(units || []); 
+      setPetPolicies(petPolicies || []); 
+      setLoading(false);
+    })
+    .catch(error => {
+      setMessage('Error retrieving unit info');
+      setLoading(false);
+      setUnits([]); 
+      setPetPolicies([]); 
+    });
   };
 
   return (
